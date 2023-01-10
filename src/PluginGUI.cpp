@@ -1,5 +1,4 @@
 #include "PluginGUI.h"
-#include <d3d9.h>
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
 #include <sampapi/CNetGame.h>
@@ -35,7 +34,7 @@ void PluginGUI::drawHeader() {
 
     drawList->AddText(ImVec2(pos.x + 4.f, pos.y - 20.f), -1, samp::RefNetGame()->m_szHostname);
     drawList->AddText(ImVec2(pos.x + width - toSize.x - 4.f, pos.y - 20.f), -1, textOnline.c_str());
-    
+
     drawList->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + height), 0xFA010101);
     ImVec2 id = ImGui::CalcTextSize("ID"), score = ImGui::CalcTextSize("SCORE"),
         ping = ImGui::CalcTextSize("PING");
@@ -67,7 +66,7 @@ void PluginGUI::drawBox(int id, std::string nick,
     auto scoreSize = ImGui::CalcTextSize(scoreStr.c_str());
     auto pingSize = ImGui::CalcTextSize(pingStr.c_str());
     bool hovered = ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + width, pos.y + height));
-    
+
     drawList->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + height), 0xcc010101);
     drawList->AddRectFilled(pos, ImVec2(pos.x + 5.5, pos.y + height),
         ImGui::ColorConvertFloat4ToU32(ImVec4(col.x, col.y, col.z, 0.8f)));
@@ -94,6 +93,27 @@ void PluginGUI::drawBox(int id, std::string nick,
 void PluginGUI::process() {
     if (samp::RefNetGame() == nullptr || !mainWindow)
         return;
+    static auto lastUpdate = std::chrono::system_clock::now();
+    auto now = std::chrono::system_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate) >= std::chrono::milliseconds(1500)) {
+      lastUpdate = now;
+      entries.clear();
+      entries.emplace_back(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_nId,
+          samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_szName,
+          samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerScore(),
+          samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerPing(),
+          ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_pObject->GetColorAsARGB()));
+
+      for (int i = 0; i <= 999; ++i) {
+        if (samp::RefNetGame()->GetPlayerPool()->IsDisconnected(i) || samp::RefNetGame()->GetPlayerPool()->IsNPC(i))
+          continue;
+        entries.emplace_back(i, samp::RefNetGame()->GetPlayerPool()->GetName(i),
+                             samp::RefNetGame()->GetPlayerPool()->GetScore(i),
+                             samp::RefNetGame()->GetPlayerPool()->GetPing(i),
+                             ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->GetPlayer(i)->GetColorAsARGB())
+                             );
+      }
+    }
     auto windowSize = ImGui::GetIO().DisplaySize;
     auto maxPlayers = samp::RefNetGame()->GetPlayerPool()->GetCount(true);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -107,21 +127,12 @@ void PluginGUI::process() {
     ImGui::SetCursorScreenPos(ImVec2(windowSize.x / 2.f - width / 2.f, 70.f));
     drawHeader();
     ImGui::BeginChild("##scrollArea", ImVec2(width, windowSize.y - 120.f - height));
-    drawBox(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_nId,
-        samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_szName,
-        samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerScore(),
-        samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerPing(),
-        ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_pObject->GetColorAsARGB())
-        );
-    for (int i = 0; i < maxPlayers; ++i) {
-        if (samp::RefNetGame()->GetPlayerPool()->IsDisconnected(i))
-            continue;
-        drawBox(i,
-            samp::RefNetGame()->GetPlayerPool()->GetName(i),
-            samp::RefNetGame()->GetPlayerPool()->GetScore(i),
-            samp::RefNetGame()->GetPlayerPool()->GetPing(i),
-            ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->GetPlayer(i)->GetColorAsARGB())
-            );
+    ImGuiListClipper clipper;
+    clipper.Begin(entries.size());
+    while (clipper.Step()) {
+      for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
+        drawBox(entries[row].id, entries[row].name, entries[row].score, entries[row].ping, entries[row].color);
+      }
     }
     ImGui::EndChild();
     ImGui::End();
