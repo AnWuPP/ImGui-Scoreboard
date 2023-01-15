@@ -30,12 +30,12 @@ PlayerEntity& PlayerList::operator[] (uint16_t id) {
     return GetPlayer(id);
 }
 
-std::map<uint16_t, PlayerEntity>::const_iterator PlayerList::begin() const {
-    return mPlayers.cbegin();
+std::map<uint16_t, PlayerEntity>::iterator PlayerList::begin() {
+    return mPlayers.begin();
 }
 
-std::map<uint16_t, PlayerEntity>::const_iterator PlayerList::end() const {
-    return mPlayers.cend();
+std::map<uint16_t, PlayerEntity>::iterator PlayerList::end() {
+    return mPlayers.end();
 }
 
 size_t PlayerList::count() const {

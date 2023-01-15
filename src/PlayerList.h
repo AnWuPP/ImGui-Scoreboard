@@ -24,7 +24,7 @@ public:
     PlayerEntity& operator[] (uint16_t id);
     bool IsPlayerExists(uint16_t id);
     void RemovePlayer(uint16_t id);
-    std::map<uint16_t, PlayerEntity>::const_iterator begin() const;
-    std::map<uint16_t, PlayerEntity>::const_iterator end() const;
+    std::map<uint16_t, PlayerEntity>::iterator begin();
+    std::map<uint16_t, PlayerEntity>::iterator end();
     size_t count() const;
 };

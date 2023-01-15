@@ -7,6 +7,7 @@
 #include <sampapi/CGame.h>
 #include <RakHook/rakhook.hpp>
 #include <format>
+#include <iterator>
 #include <vector>
 
 namespace samp = sampapi::v037r1;
@@ -132,14 +133,18 @@ void PluginGUI::process() {
         players->GetLocalPlayerPing(),
         ARGB2ABGR(players->m_localInfo.m_pObject->GetColorAsARGB())
         );
-    for (auto& entity : playerList) {
-        auto& player = entity.second;
-        drawBox(player.id,
-            player.name,
-            player.score,
-            player.ping,
-            player.color
-            );
+    ImGuiListClipper clipper;
+    clipper.Begin(playerList.count());
+    while (clipper.Step()) {
+        for (int i = clipper.DisplayStart, ie = clipper.DisplayEnd; i != ie; i++) {
+            auto& player = std::next(playerList.begin(), i)->second;
+            drawBox(player.id,
+                player.name,
+                player.score,
+                player.ping,
+                player.color
+                );
+        }
     }
     ImGui::EndChild();
     ImGui::End();
