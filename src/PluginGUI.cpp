@@ -3,6 +3,9 @@
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
 #include <sampapi/CNetGame.h>
+#include <sampapi/CChat.h>
+#include <sampapi/CGame.h>
+#include <RakHook/rakhook.hpp>
 #include <format>
 #include <vector>
 
@@ -15,7 +18,7 @@ D3DCOLOR ARGB2ABGR(D3DCOLOR color) {
             ((color) & 0xFF) << 16;          // Blue -> Red
 }
 
-PluginGUI::PluginGUI() : mainWindow(false), moveLeftAtScroll(false) { }
+PluginGUI::PluginGUI(PlayerList& _playerList) : mainWindow(false), moveLeftAtScroll(false), playerList(_playerList) { }
 
 void PluginGUI::init() {
     ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.0, 0.0, 0.0, 0.7);
@@ -30,7 +33,7 @@ void PluginGUI::drawHeader() {
     auto width = windowSize.x / 2.7f;
     auto height = 30.f;
 
-    auto textOnline = std::format("Online: {}", samp::RefNetGame()->GetPlayerPool()->GetCount(true));
+    auto textOnline = std::format("Online: {}", playerList.count() + 1);
     auto toSize = ImGui::CalcTextSize(textOnline.c_str());
 
     drawList->AddText(ImVec2(pos.x + 4.f, pos.y - 20.f), -1, samp::RefNetGame()->m_szHostname);
@@ -81,7 +84,16 @@ void PluginGUI::drawBox(int id, std::string nick,
             ImGui::ColorConvertFloat4ToU32(ImVec4(col.x, col.y, col.z, 0.4f))
         );
         if (ImGui::IsMouseDoubleClicked(0)) {
+            RakNet::BitStream rpc;
+            rpc.Write(id);
+            rpc.Write(0);
+            rakhook::send_rpc(22, &rpc, PacketPriority::HIGH_PRIORITY, PacketReliability::UNRELIABLE_SEQUENCED, (char)0, false);
 
+            mainWindow = false;
+            samp::RefGame()->EnableHUD(true);
+            samp::RefGame()->EnableRadar(true);
+            samp::RefChat()->m_nMode = samp::RefChat()->DISPLAY_MODE_NORMAL;
+            samp::RefGame()->SetCursorMode(samp::CURSOR_NONE, true);
         }
     }
     drawList->AddText(ImVec2(pos.x + 22.f - idSize.x / 2.f, pos.y + height / 2.f - 8.f), color, idStr.c_str());
@@ -94,33 +106,39 @@ void PluginGUI::drawBox(int id, std::string nick,
 void PluginGUI::process() {
     if (samp::RefNetGame() == nullptr || !mainWindow)
         return;
+    static auto lastUpdate = std::chrono::system_clock::now();
+    auto now = std::chrono::system_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate) >= std::chrono::milliseconds(1500)) {
+        samp::RefNetGame()->UpdatePlayers();
+        lastUpdate = now;
+    }
     auto windowSize = ImGui::GetIO().DisplaySize;
-    auto maxPlayers = samp::RefNetGame()->GetPlayerPool()->GetCount(true);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(windowSize);
     ImGui::Begin("##main", &mainWindow, ImGuiWindowFlags_NoTitleBar |
                                         ImGuiWindowFlags_NoMove |
                                         ImGuiWindowFlags_NoResize |
-                                        ImGuiWindowFlags_NoBringToFrontOnFocus);
+                                        ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                        ImGuiWindowFlags_UnsavedDocument);
     auto width = windowSize.x / 2.7f;
     auto height = 30.f;
     ImGui::SetCursorScreenPos(ImVec2(windowSize.x / 2.f - width / 2.f, 70.f));
     drawHeader();
     ImGui::BeginChild("##scrollArea", ImVec2(width, windowSize.y - 120.f - height));
-    drawBox(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_nId,
-        samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_szName,
-        samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerScore(),
-        samp::RefNetGame()->GetPlayerPool()->GetLocalPlayerPing(),
-        ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->m_localInfo.m_pObject->GetColorAsARGB())
+    auto players = samp::RefNetGame()->GetPlayerPool();
+    drawBox(players->m_localInfo.m_nId,
+        players->m_localInfo.m_szName,
+        players->GetLocalPlayerScore(),
+        players->GetLocalPlayerPing(),
+        ARGB2ABGR(players->m_localInfo.m_pObject->GetColorAsARGB())
         );
-    for (int i = 0; i < maxPlayers; ++i) {
-        if (samp::RefNetGame()->GetPlayerPool()->IsDisconnected(i))
-            continue;
-        drawBox(i,
-            samp::RefNetGame()->GetPlayerPool()->GetName(i),
-            samp::RefNetGame()->GetPlayerPool()->GetScore(i),
-            samp::RefNetGame()->GetPlayerPool()->GetPing(i),
-            ARGB2ABGR(samp::RefNetGame()->GetPlayerPool()->GetPlayer(i)->GetColorAsARGB())
+    for (auto& entity : playerList) {
+        auto& player = entity.second;
+        drawBox(player.id,
+            player.name,
+            player.score,
+            player.ping,
+            player.color
             );
     }
     ImGui::EndChild();

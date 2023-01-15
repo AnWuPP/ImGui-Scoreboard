@@ -26,7 +26,7 @@ HWND gameHwnd = []() {
     }
 }();
 
-PluginRender::PluginRender() : ImGuiinited(false) {
+PluginRender::PluginRender(PlayerList& _playerList) : ImGuiinited(false), playerList(_playerList), GUI(playerList) {
     using namespace std::placeholders;
     hookPresent.set_dest(getFunctionAddress(17));
     hookReset.set_dest(getFunctionAddress(16));
@@ -93,9 +93,12 @@ std::optional<HRESULT> PluginRender::onPresent(const decltype(hookPresent)& hook
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        SetCursor(GUI.mainWindow ? LoadCursor(NULL, IDC_ARROW) : NULL);
-        ImGui::SetMouseCursor(GUI.mainWindow ? ImGuiMouseCursor_Arrow : ImGuiMouseCursor_None);
-        ShowCursor(GUI.mainWindow);
+        bool showCursor = GUI.mainWindow || samp::RefGame()->m_nCursorMode != 0;
+        if (!showCursor) {
+            SetCursor(NULL);
+            ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+            ShowCursor(false);
+        }
         
         GUI.process();
 

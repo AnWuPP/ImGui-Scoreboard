@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginGUI.h"
+#include "PlayerList.h"
 #include <kthook/kthook.hpp>
 #include <d3d9.h>
 #include <memory>
@@ -10,6 +11,7 @@ using PresentSignature = HRESULT(__stdcall*)(IDirect3DDevice9*, const RECT*, con
 using ResetSignature = HRESULT(__stdcall*)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
 
 class PluginRender {
+    PlayerList& playerList;
     bool ImGuiinited;
     PluginGUI GUI;
 
@@ -25,6 +27,6 @@ class PluginRender {
     kthook::kthook_simple<WNDPROC> hookWndproc{};
     HRESULT __stdcall onWndproc(const decltype(hookWndproc)& hook, HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 public:
-    PluginRender();
+    PluginRender(PlayerList& _playerList);
     ~PluginRender();
 };
