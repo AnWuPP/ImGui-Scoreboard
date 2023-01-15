@@ -93,7 +93,7 @@ std::optional<HRESULT> PluginRender::onPresent(const decltype(hookPresent)& hook
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        bool showCursor = GUI.mainWindow || samp::RefGame()->m_nCursorMode != 0;
+        bool showCursor = GUI.mainWindow || samp::RefGame()->m_nCursorMode != 0 || GetCursor() == LoadCursor(NULL, IDC_ARROW);
         if (!showCursor) {
             SetCursor(NULL);
             ImGui::SetMouseCursor(ImGuiMouseCursor_None);
