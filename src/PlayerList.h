@@ -26,5 +26,6 @@ public:
     void RemovePlayer(uint16_t id);
     std::map<uint16_t, PlayerEntity>::iterator begin();
     std::map<uint16_t, PlayerEntity>::iterator end();
-    size_t count() const;
+    size_t Count() const;
+    void ClearList();
 };

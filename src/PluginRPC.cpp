@@ -6,7 +6,6 @@
 
 namespace samp = sampapi::v037r1;
 
-D3DCOLOR ARGB2ABGR(D3DCOLOR color);
 D3DCOLOR RGBA2ABGR(D3DCOLOR color) {
     return ((color >> 24) & 0xFF) |
             ((color >> 16) & 0xFF) << 8 |
@@ -34,8 +33,9 @@ void writeWithSize(RakNet::BitStream& bs, std::string_view str) {
 PluginRPC::PluginRPC(PlayerList& _playerList) : playerList(_playerList) { }
 
 bool PluginRPC::onJoinClient(unsigned char& _id, RakNet::BitStream* bs) {
-    if (_id != 137)
+    if (_id != 137) {
         return true;
+    }
 
     uint16_t id;
     uint32_t color;
@@ -53,8 +53,9 @@ bool PluginRPC::onJoinClient(unsigned char& _id, RakNet::BitStream* bs) {
 }
 
 bool PluginRPC::onQuitClient(unsigned char& _id, RakNet::BitStream* bs) {
-    if (_id != 138)
+    if (_id != 138) {
         return true;
+    }
 
     uint16_t id;
     char reason;
@@ -68,8 +69,9 @@ bool PluginRPC::onQuitClient(unsigned char& _id, RakNet::BitStream* bs) {
 }
 
 bool PluginRPC::onSetPlayerColor(unsigned char& _id, RakNet::BitStream* bs) {
-    if (_id != 72)
+    if (_id != 72) {
         return true;
+    }
 
     uint16_t id;
     uint32_t color;
@@ -83,8 +85,9 @@ bool PluginRPC::onSetPlayerColor(unsigned char& _id, RakNet::BitStream* bs) {
 }
 
 bool PluginRPC::onSetPlayerName(unsigned char& _id, RakNet::BitStream* bs) {
-    if (_id != 11)
+    if (_id != 11) {
         return true;
+    }
 
     uint16_t id;
     std::string newname;
@@ -100,8 +103,9 @@ bool PluginRPC::onSetPlayerName(unsigned char& _id, RakNet::BitStream* bs) {
 }
 
 bool PluginRPC::onUpdateScoresAndPings(unsigned char& _id, RakNet::BitStream* bs) {
-    if (_id != 155)
+    if (_id != 155) {
         return true;
+    }
 
     for(uint16_t i = 0, ie = bs->GetNumberOfBytesUsed() / 10; i != ie; ++i) {
         uint16_t id;
@@ -115,6 +119,19 @@ bool PluginRPC::onUpdateScoresAndPings(unsigned char& _id, RakNet::BitStream* bs
             player.score = score;
             player.ping = ping;
         }
+    }
+    return true;
+}
+
+bool PluginRPC::onConnectionAccept(Packet* p) {
+    RakNet::BitStream bs(p->data, p->length, false);
+    uint8_t packetId;
+    bs.Read(packetId);
+    if (packetId != 34) {
+        return true;
+    }
+    if (playerList.Count() > 0) {
+        playerList.ClearList();
     }
     return true;
 }

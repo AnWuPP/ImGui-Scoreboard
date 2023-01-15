@@ -38,6 +38,10 @@ std::map<uint16_t, PlayerEntity>::iterator PlayerList::end() {
     return mPlayers.end();
 }
 
-size_t PlayerList::count() const {
+size_t PlayerList::Count() const {
     return mPlayers.size();
+}
+
+void PlayerList::ClearList() {
+    mPlayers.clear();
 }

@@ -34,7 +34,7 @@ void PluginGUI::drawHeader() {
     auto width = windowSize.x / 2.7f;
     auto height = 30.f;
 
-    auto textOnline = std::format("Online: {}", playerList.count() + 1);
+    auto textOnline = std::format("Online: {}", playerList.Count() + 1);
     auto toSize = ImGui::CalcTextSize(textOnline.c_str());
 
     drawList->AddText(ImVec2(pos.x + 4.f, pos.y - 20.f), -1, samp::RefNetGame()->m_szHostname);
@@ -134,10 +134,11 @@ void PluginGUI::process() {
         ARGB2ABGR(players->m_localInfo.m_pObject->GetColorAsARGB())
         );
     ImGuiListClipper clipper;
-    clipper.Begin(playerList.count());
+    clipper.Begin(playerList.Count());
     while (clipper.Step()) {
-        for (int i = clipper.DisplayStart, ie = clipper.DisplayEnd; i != ie; i++) {
-            auto& player = std::next(playerList.begin(), i)->second;
+        auto it = std::next(playerList.begin(), clipper.DisplayStart);
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i, ++it) {
+            auto& player = it->second;
             drawBox(player.id,
                 player.name,
                 player.score,

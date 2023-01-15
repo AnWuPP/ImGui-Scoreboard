@@ -12,4 +12,5 @@ public:
     bool onSetPlayerColor(unsigned char& id, RakNet::BitStream* bs);
     bool onSetPlayerName(unsigned char& id, RakNet::BitStream* bs);
     bool onUpdateScoresAndPings(unsigned char& id, RakNet::BitStream* bs);
+    bool onConnectionAccept(Packet *p);
 };
