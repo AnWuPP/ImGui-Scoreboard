@@ -18,9 +18,6 @@ void Plugin::mainloop(const decltype(hookCTimerUpdate)& hook) {
         StringCompressor::AddReference();
         rakhook::on_receive_rpc += std::bind(&PluginRPC::onJoinClient, &rpc, _1, _2);
         rakhook::on_receive_rpc += std::bind(&PluginRPC::onQuitClient, &rpc, _1, _2);
-        rakhook::on_receive_rpc += std::bind(&PluginRPC::onSetPlayerColor, &rpc, _1, _2);
-        rakhook::on_receive_rpc += std::bind(&PluginRPC::onSetPlayerName, &rpc, _1, _2);
-        rakhook::on_receive_rpc += std::bind(&PluginRPC::onUpdateScoresAndPings, &rpc, _1, _2);
         rakhook::on_receive_packet += std::bind(&PluginRPC::onConnectionAccept, &rpc, _1);
         inited = true;
     }

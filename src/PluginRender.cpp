@@ -1,12 +1,12 @@
 #include "PluginRender.h"
+#include <sampapi/CChat.h>
+#include <sampapi/CGame.h>
+#include <sampapi/CNetGame.h>
 #include <imgui.h>
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
 #include <format>
 #include <memory>
-#include <sampapi/CChat.h>
-#include <sampapi/CGame.h>
-#include <sampapi/CNetGame.h>
 namespace samp = sampapi::v037r1;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -75,17 +75,19 @@ std::optional<HRESULT> PluginRender::onPresent(const decltype(hookPresent)& hook
     if (!ImGuiinited && samp::RefNetGame() != nullptr) {
         using namespace std::placeholders;
         ImGui::CreateContext();
-        ImGui_ImplWin32_Init(gameHwnd);
-        ImGui_ImplDX9_Init(pDevice);
         auto pLatestWndproc = GetWindowLongPtrA(gameHwnd, GWLP_WNDPROC);
         hookWndproc.set_dest(pLatestWndproc);
         hookWndproc.set_cb(std::bind(&PluginRender::onWndproc, this, _1, _2, _3, _4, _5));
         hookWndproc.install();
-        
+
         ImGuiIO& io = ImGui::GetIO();
+        io.MouseDrawCursor = false;
+        io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
         ImFontConfig font_config;
         io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\trebucbd.ttf", 16.0f, &font_config, io.Fonts->GetGlyphRangesCyrillic());
         GUI.init();
+        ImGui_ImplWin32_Init(gameHwnd);
+        ImGui_ImplDX9_Init(pDevice);
         ImGuiinited = true;
     }
     if (ImGui::GetCurrentContext()) {
@@ -93,13 +95,6 @@ std::optional<HRESULT> PluginRender::onPresent(const decltype(hookPresent)& hook
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        bool showCursor = GUI.mainWindow || samp::RefGame()->m_nCursorMode != 0 || GetCursor() == LoadCursor(NULL, IDC_ARROW);
-        if (!showCursor) {
-            SetCursor(NULL);
-            ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-            ShowCursor(false);
-        }
-        
         GUI.process();
 
         ImGui::EndFrame();
@@ -115,7 +110,6 @@ std::optional<HRESULT> PluginRender::onLost(const decltype(hookReset)& hook, IDi
 }
 
 void PluginRender::onReset(const decltype(hookReset)& hook, HRESULT& returnValue, IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS* parameters) {
-
 }
 
 HRESULT __stdcall PluginRender::onWndproc(const decltype(hookWndproc)& hook, HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -125,7 +119,6 @@ HRESULT __stdcall PluginRender::onWndproc(const decltype(hookWndproc)& hook, HWN
                 GUI.mainWindow = !GUI.mainWindow;
                 samp::RefGame()->EnableHUD(!GUI.mainWindow);
                 samp::RefGame()->EnableRadar(!GUI.mainWindow);
-                samp::RefChat()->m_nMode = GUI.mainWindow ? samp::RefChat()->DISPLAY_MODE_OFF : samp::RefChat()->DISPLAY_MODE_NORMAL;
                 samp::RefGame()->SetCursorMode(GUI.mainWindow ? samp::CURSOR_LOCKCAM : samp::CURSOR_NONE, !GUI.mainWindow);
                 return 1;
             }
@@ -133,7 +126,6 @@ HRESULT __stdcall PluginRender::onWndproc(const decltype(hookWndproc)& hook, HWN
                 GUI.mainWindow = false;
                 samp::RefGame()->EnableHUD(true);
                 samp::RefGame()->EnableRadar(true);
-                samp::RefChat()->m_nMode = samp::RefChat()->DISPLAY_MODE_NORMAL;
                 samp::RefGame()->SetCursorMode(samp::CURSOR_NONE, true);
                 return 1;
             }

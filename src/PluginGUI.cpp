@@ -13,7 +13,7 @@
 namespace samp = sampapi::v037r1;
 
 D3DCOLOR ARGB2ABGR(D3DCOLOR color) {
-    return ((color >> 24) << 24) |          // Alpha
+    return (((color >> 24) | 0xFF) << 24) |          // Alpha
             ((color >> 16) & 0xFF) |         // Red  -> Blue
             ((color >> 8) & 0xFF) << 8 |     // Green
             ((color) & 0xFF) << 16;          // Blue -> Red
@@ -94,7 +94,7 @@ void PluginGUI::drawBox(int id, std::string nick,
             samp::RefGame()->EnableHUD(true);
             samp::RefGame()->EnableRadar(true);
             samp::RefChat()->m_nMode = samp::RefChat()->DISPLAY_MODE_NORMAL;
-            samp::RefGame()->SetCursorMode(samp::CURSOR_NONE, true);
+            samp::RefGame()->SetCursorMode(samp::CURSOR_NONE, false);
         }
     }
     drawList->AddText(ImVec2(pos.x + 22.f - idSize.x / 2.f, pos.y + height / 2.f - 8.f), color, idStr.c_str());
@@ -138,12 +138,13 @@ void PluginGUI::process() {
     while (clipper.Step()) {
         auto it = std::next(playerList.begin(), clipper.DisplayStart);
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i, ++it) {
-            auto& player = it->second;
-            drawBox(player.id,
-                player.name,
-                player.score,
-                player.ping,
-                player.color
+            auto id = *it;
+            auto players = samp::RefNetGame()->GetPlayerPool();
+            drawBox(id,
+                players->GetName(id),
+                players->GetScore(id),
+                players->GetPing(id),
+                ARGB2ABGR(players->GetPlayer(id)->GetColorAsARGB())
                 );
         }
     }

@@ -1,47 +1,30 @@
 #include "PlayerList.h"
-
-PlayerEntity::PlayerEntity(uint16_t _id, std::string _name, uint32_t _color, uint16_t _score, uint16_t _ping)
-    : id(_id), name(_name), color(_color), score(_score), ping(_ping) { }
-
-PlayerList::PlayerList() : invalidPlayer(65535, "", -1, 65535, 65535) { }
-
-PlayerEntity& PlayerList::AddPlayer(uint16_t id, std::string name, uint32_t color, uint16_t score, uint16_t ping) {
-    return mPlayers[id] = { id, name, color, score, ping };
+void PlayerList::AddPlayer(uint16_t id) {
+    player_list_.insert(id);
 }
 
 bool PlayerList::IsPlayerExists(uint16_t id) {
-    return mPlayers.find(id) != mPlayers.end();
-}
-
-PlayerEntity& PlayerList::GetPlayer(uint16_t id) {
-    if (IsPlayerExists(id)) {
-        return mPlayers[id];
-    }
-    return invalidPlayer;
+    return player_list_.find(id) != player_list_.end();
 }
 
 void PlayerList::RemovePlayer(uint16_t id) {
     if (IsPlayerExists(id)) {
-        mPlayers.erase(id);
+        player_list_.erase(id);
     }
 }
 
-PlayerEntity& PlayerList::operator[] (uint16_t id) {
-    return GetPlayer(id);
+std::set<uint16_t>::iterator PlayerList::begin() {
+    return player_list_.begin();
 }
 
-std::map<uint16_t, PlayerEntity>::iterator PlayerList::begin() {
-    return mPlayers.begin();
-}
-
-std::map<uint16_t, PlayerEntity>::iterator PlayerList::end() {
-    return mPlayers.end();
+std::set<uint16_t>::iterator PlayerList::end() {
+    return player_list_.end();
 }
 
 size_t PlayerList::Count() const {
-    return mPlayers.size();
+    return player_list_.size();
 }
 
 void PlayerList::ClearList() {
-    mPlayers.clear();
+    player_list_.clear();
 }
