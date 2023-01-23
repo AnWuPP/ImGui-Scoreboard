@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required (VERSION 3.15)
 
 project ("Scoreboard"
-	VERSION 1.1
+	VERSION 1.2
 )
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "D:/Games/Grand Theft Auto San Andreas Samp RP")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "D:/Games/Grand Theft Auto San Andreas Samp RP")

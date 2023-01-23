@@ -120,6 +120,7 @@ HRESULT __stdcall PluginRender::onWndproc(const decltype(hookWndproc)& hook, HWN
                 samp::RefGame()->EnableHUD(!GUI.mainWindow);
                 samp::RefGame()->EnableRadar(!GUI.mainWindow);
                 samp::RefGame()->SetCursorMode(GUI.mainWindow ? samp::CURSOR_LOCKCAM : samp::CURSOR_NONE, !GUI.mainWindow);
+                samp::RefChat()->m_nMode = GUI.mainWindow ? samp::RefChat()->DISPLAY_MODE_OFF : samp::RefChat()->DISPLAY_MODE_NORMAL;
                 return 1;
             }
             else if (wParam == VK_ESCAPE && GUI.mainWindow) {
@@ -127,6 +128,7 @@ HRESULT __stdcall PluginRender::onWndproc(const decltype(hookWndproc)& hook, HWN
                 samp::RefGame()->EnableHUD(true);
                 samp::RefGame()->EnableRadar(true);
                 samp::RefGame()->SetCursorMode(samp::CURSOR_NONE, true);
+                samp::RefChat()->m_nMode = samp::RefChat()->DISPLAY_MODE_NORMAL;
                 return 1;
             }
             break;
